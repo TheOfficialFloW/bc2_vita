@@ -68,4 +68,4 @@ cmake .. && make
 ## Credits
 
 - Rinnegatamante for vitaGL.
-- XYZ for providing LiveArea assets.
+- Once13One for providing LiveArea assets.
