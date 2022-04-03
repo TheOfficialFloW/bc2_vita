@@ -93,18 +93,6 @@ int ret1(void) {
   return 1;
 }
 
-int mkdir(const char *pathname, mode_t mode) {
-  if (sceIoMkdir(pathname, mode) < 0)
-    return -1;
-  return 0;
-}
-
-int rmdir(const char *pathname) {
-  if (sceIoRmdir(pathname) < 0)
-    return -1;
-  return 0;
-}
-
 char *getcwd(char *buf, size_t size) {
   if (buf) {
     buf[0] = '\0';
@@ -162,6 +150,7 @@ int ctrl_thread(SceSize args, void *argp) {
   int lastX[2] = { -1, -1 };
   int lastY[2] = { -1, -1 };
 
+  float lastLx = 0.0f, lastLy = 0.0f, lastRx = 0.0f, lastRy = 0.0f;
   float lx = 0.0f, ly = 0.0f, rx = 0.0f, ry = 0.0f;
   uint32_t old_buttons = 0, current_buttons = 0, pressed_buttons = 0, released_buttons = 0;
 
@@ -174,7 +163,7 @@ int ctrl_thread(SceSize args, void *argp) {
         int x = (int)((float)touch.report[i].x * (float)SCREEN_W / 1920.0f);
         int y = (int)((float)touch.report[i].y * (float)SCREEN_H / 1088.0f);
 
-        if (lastX[i] != -1 || lastY[i] != -1)
+        if (lastX[i] == -1 || lastY[i] == -1)
           Android_Karisma_AppOnTouchEvent(ACTION_DOWN, x, y, i);
         else
           Android_Karisma_AppOnTouchEvent(ACTION_MOVE, x, y, i);
@@ -217,9 +206,14 @@ int ctrl_thread(SceSize args, void *argp) {
     if (fabsf(ry) < 0.25f)
       ry = 0.0f;
 
-    // TODO: send stop event only once
-    Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
-    Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
+    if (lastLx != lx || lastLy != ly || lastRx != rx || lastRy != ry) {
+      lastLx = lx;
+      lastLy = ly;
+      lastRx = rx;
+      lastRy = ry;
+      Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
+      Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
+    }
 
     sceKernelDelayThread(1000);
   }
