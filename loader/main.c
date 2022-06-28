@@ -206,14 +206,8 @@ int ctrl_thread(SceSize args, void *argp) {
     if (fabsf(ry) < 0.25f)
       ry = 0.0f;
 
-    if (lastLx != lx || lastLy != ly || lastRx != rx || lastRy != ry) {
-      lastLx = lx;
-      lastLy = ly;
-      lastRx = rx;
-      lastRy = ry;
-      Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
-      Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
-    }
+    Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
+    Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
 
     sceKernelDelayThread(1000);
   }
@@ -250,6 +244,8 @@ int sound_thread(SceSize args, void *argp) {
 
 int main_thread(SceSize args, void *argp) {
   glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+  vglSetParamBufferSize(4 * 1024 * 1024);
+  vglUseTripleBuffering(GL_FALSE);
   vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE, SHARK_ENABLE);
   vglInitWithCustomThreshold(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 
