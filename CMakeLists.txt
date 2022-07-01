@@ -15,7 +15,7 @@ set(VITA_TITLEID  "BC2000000")
 set(VITA_VERSION  "01.00")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -mfloat-abi=softfp")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wl,-q,--wrap,memcpy,--wrap,memmove,--wrap,memset -Wall -O3 -fdiagnostics-color=always -mfloat-abi=softfp")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
 
 add_executable(BC2.elf
@@ -29,8 +29,10 @@ target_link_libraries(BC2.elf
   stdc++
   vitaGL
   vitashark
+  SceShaccCgExt
   mathneon
   kubridge_stub
+  taihen_stub
   SceAppMgr_stub
   SceAudio_stub
   SceCtrl_stub

@@ -206,14 +206,8 @@ int ctrl_thread(SceSize args, void *argp) {
     if (fabsf(ry) < 0.25f)
       ry = 0.0f;
 
-    if (lastLx != lx || lastLy != ly || lastRx != rx || lastRy != ry) {
-      lastLx = lx;
-      lastLy = ly;
-      lastRx = rx;
-      lastRy = ry;
-      Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
-      Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
-    }
+    Android_Karisma_AppOnJoystickEvent(3, lx, ly, 0);
+    Android_Karisma_AppOnJoystickEvent(3, rx, ry, 1);
 
     sceKernelDelayThread(1000);
   }
@@ -249,9 +243,11 @@ int sound_thread(SceSize args, void *argp) {
 }
 
 int main_thread(SceSize args, void *argp) {
+  glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+  vglSetParamBufferSize(4 * 1024 * 1024);
+  vglUseTripleBuffering(GL_FALSE);
   vglSetupRuntimeShaderCompiler(SHARK_OPT_UNSAFE, SHARK_ENABLE, SHARK_ENABLE, SHARK_ENABLE);
-  vglUseVram(GL_TRUE);
-  vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+  vglInitWithCustomThreshold(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, 0, 0, 0, SCE_GXM_MULTISAMPLE_4X);
 
   int (* Android_Karisma_AppInit)(void) = (void *)so_symbol(&bc2_mod, "Android_Karisma_AppInit");
   int (* Android_Karisma_AppUpdate)(void) = (void *)so_symbol(&bc2_mod, "Android_Karisma_AppUpdate");
@@ -370,7 +366,7 @@ struct tm *localtime_hook(time_t *timer) {
   return localtime(timer);
 }
 
-static DynLibFunction dynlib_functions[] = {
+static so_default_dynlib default_dynlib[] = {
   { "_ZdaPv", (uintptr_t)&_ZdaPv },
   { "_ZdlPv", (uintptr_t)&_ZdlPv },
   { "_Znaj", (uintptr_t)&_Znaj },
@@ -426,7 +422,7 @@ static DynLibFunction dynlib_functions[] = {
   { "fopen", (uintptr_t)&fopen },
   { "fprintf", (uintptr_t)&fprintf },
   { "fread", (uintptr_t)&fread },
-  { "free", (uintptr_t)&free },
+  { "free", (uintptr_t)&vglFree },
   { "fseek", (uintptr_t)&fseek },
   { "fstat", (uintptr_t)&fstat },
   { "ftell", (uintptr_t)&ftell },
@@ -485,16 +481,16 @@ static DynLibFunction dynlib_functions[] = {
   { "localtime", (uintptr_t)&localtime_hook },
   { "log", (uintptr_t)&log },
   { "lrand48", (uintptr_t)&lrand48 },
-  { "malloc", (uintptr_t)&malloc },
+  { "malloc", (uintptr_t)&vglMalloc },
   { "memcmp", (uintptr_t)&memcmp },
-  { "memcpy", (uintptr_t)&memcpy },
-  { "memmove", (uintptr_t)&memmove },
-  { "memset", (uintptr_t)&memset },
+  { "memcpy", (uintptr_t)&sceClibMemcpy },
+  { "memmove", (uintptr_t)&sceClibMemmove },
+  { "memset", (uintptr_t)&sceClibMemset },
   { "mkdir", (uintptr_t)&mkdir },
   { "pow", (uintptr_t)&pow },
   { "printf", (uintptr_t)&ret0 },
   { "read", (uintptr_t)&read },
-  { "realloc", (uintptr_t)&realloc },
+  { "realloc", (uintptr_t)&vglRealloc },
   { "rmdir", (uintptr_t)&rmdir },
   { "sin", (uintptr_t)&sin },
   { "snprintf", (uintptr_t)&snprintf },
@@ -544,11 +540,11 @@ int main(int argc, char *argv[]) {
   if (!file_exists("ur0:/data/libshacccg.suprx") && !file_exists("ur0:/data/external/libshacccg.suprx"))
     fatal_error("Error libshacccg.suprx is not installed.");
 
-  if (so_load(&bc2_mod, SO_PATH) < 0)
+  if (so_file_load(&bc2_mod, SO_PATH, LOAD_ADDRESS) < 0)
     fatal_error("Error could not load %s.", SO_PATH);
 
   so_relocate(&bc2_mod);
-  so_resolve(&bc2_mod, dynlib_functions, sizeof(dynlib_functions) / sizeof(DynLibFunction), 1);
+  so_resolve(&bc2_mod, default_dynlib, sizeof(default_dynlib), 1);
 
   patch_game();
   so_flush_caches(&bc2_mod);
